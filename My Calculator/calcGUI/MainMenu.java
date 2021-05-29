@@ -1,33 +1,47 @@
 package calcGUI;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-import java.awt.Dimension;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MainMenu extends BaseGUI implements ActionListener
 {
-	private static JLabel title = new JLabel();
+	//private static JLabel title;
+	private static JLabel title;
 	private static JButton[] buttons = new JButton[5];
-	public static void buildGUI()
+	private static JPanel mainPanel;
+	private static JPanel buttonPanel;
+	private static JPanel titlePanel;
+	public MainMenu() 
 	{
-		/* Clear the panel */
-		panel.removeAll();
-		panel.repaint();
+		mainPanel = new JPanel();
+		buttonPanel = new JPanel();
+		titlePanel = new JPanel();
 		
-		buildLabels();
-		buildButtons();
+		mainPanel.setLayout(new BorderLayout());
+		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+		titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+		mainPanel.add(buttonPanel, BorderLayout.CENTER);
+		mainPanel.add(titlePanel, BorderLayout.PAGE_START);
 		
-	}
-	public static void buildButtons() 
-	{
+		//Label stuff
+		title = new JLabel("My Calculator");
+		title.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		titlePanel.add(title);
+		
 		//Button stuff
 		/* fill button list with JButton objects and add them to the panel */
 		for (int count = 0; count < buttons.length; count++) 
+		{
 			buttons[count] = new JButton();
-		addComponentsToPanel(buttons);
+			buttons[count].setAlignmentX(JButton.CENTER_ALIGNMENT);
+		}
+		//addComponentsToPanel(buttons);
 		
 		/* Set the text on each button for each of the functions the 
 		 * calculator can carry out and one extra to quit the program */
@@ -37,32 +51,25 @@ public class MainMenu extends BaseGUI implements ActionListener
 		buttons[3].setText("General Calculator");
 		buttons[4].setText("Quit");
 		
+		for (int count = 0; count < buttons.length; count++)
+			buttonPanel.add(buttons[count]);
+		
 		/* Add an action listener to each button to carry out the various
 		 * functions that the names of the buttons suggest */
-		buttons[0].addActionListener(new DescDataGUI());
-		buttons[1].addActionListener(new LineOfBestFit());
-		buttons[2].addActionListener(new QuadraticFormula());
-		buttons[3].addActionListener(new GenCalcGUI());
-		buttons[4].addActionListener(new QuitProgram());
-				
-		/* Set the dimensions for each button based on the text on each button */
-		setComponentsSize(buttons);
+		ButtonHandler handler = new ButtonHandler();
+		buttons[0].addActionListener(handler);
+		buttons[1].addActionListener(handler);
+		buttons[2].addActionListener(handler);
+		buttons[3].addActionListener(handler);
+		buttons[4].addActionListener(handler);
 		
-		/* Set the buttons on the frame in increments of 30 pixels apart */
-		for (int count = 0; count < buttons.length; count++) 
-			buttons[count].setLocation(COLUMN_COORDS[2] - (buttons[count].getWidth() / 2), 40 + count * 30);
+		centerPanel.add(mainPanel, "Main Menu");
 	}
-	public static void buildLabels() 
+	public void show()
 	{
-		setErrWarning();
-		
-		//Label stuff
-		title.setText("My Calculator");
-		Dimension size = title.getPreferredSize();
-		title.setBounds(COLUMN_COORDS[2] - (size.width / 2), 20, size.width, size.height);
-		panel.add(title);
+		mainLayout.show(centerPanel, "Main Menu");
 	}
-	public static JButton[] getButtons() 
+	public static JButton[] getButtons()
 	{
 		return buttons;
 	}
@@ -72,13 +79,29 @@ public class MainMenu extends BaseGUI implements ActionListener
 	}
 	public void actionPerformed(ActionEvent arg0) 
 	{
-		buildGUI();	
+		show();	
 	}
-	private static class QuitProgram implements ActionListener 
+	private class ButtonHandler implements ActionListener
 	{
-		public void actionPerformed(ActionEvent arg0) 
+		public void actionPerformed(ActionEvent event) 
 		{
-			System.exit(0);
+			JButton source = (JButton)event.getSource();
+			if (source.equals(buttons[0])) 
+				dd.show();
+			else if (source.equals(buttons[1])) 
+			{
+				lobf.show();
+			}
+			else if (source.equals(buttons[2])) 
+			{
+				qf.show();
+			}
+			else if (source.equals(buttons[3])) 
+			{
+				gc.show();
+			}
+			else 
+				System.exit(0);
 		}
 	}
 }
