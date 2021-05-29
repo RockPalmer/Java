@@ -1,21 +1,27 @@
 package calcGUI;
 
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import calcFn.GenCalcFn;
 
-public class GenCalcGUI extends BaseGUI implements ActionListener
+public class GenCalcGUI extends BaseGUI
 {
-	protected static final char[] VALID_CHARS = {'0','1','2','3','4','5','6','7','8','9','\u00AD','+','.','-','(',')',
+	private static final char[] VALID_CHARS = {'0','1','2','3','4','5','6','7','8','9','\u00AD','+','.','-','(',')',
 			'\u02E3','\u00F7','^','\u221A', '\u03C0','\u2022','/','E'};
-	protected static final String[] VALID_STRINGS = {"cos"};
-	protected static final char[] FREE_FLOATING_OPS = {'\u221A'};
-	protected static final char[] VALID_OPERATIONS = {'+','\u00AD','\u02E3','\u00F7','^','\u221A','\u2022','/'};
-	protected static final char[] VALID_NUMS = {'0','1','2','3','4','5','6','7','8','9','.','-','\u03C0','E'};
+	private static final String[] VALID_STRINGS = {"cos"};
+	private static final char[] FREE_FLOATING_OPS = {'\u221A'};
+	private static final char[] VALID_OPERATIONS = {'+','\u00AD','\u02E3','\u00F7','^','\u221A','\u2022','/'};
+	private static final char[] VALID_NUMS = {'0','1','2','3','4','5','6','7','8','9','.','-','\u03C0','E'};
 	private static final String[][] BUTTON_LABELS = 
 		{
 			{"1","2","3","+","\u00AD"},
@@ -24,7 +30,7 @@ public class GenCalcGUI extends BaseGUI implements ActionListener
 			{"CLEAR","0","\u2190","(",")"},
 			{"E","( - )",".","\u03C0","="}
 		};
-	protected static JTextField answer;
+	private static JTextField answer;
 	private static JButton[][] buttons = 
 		{
 			{new JButton(),new JButton(),new JButton(),new JButton(),new JButton()},
@@ -33,60 +39,61 @@ public class GenCalcGUI extends BaseGUI implements ActionListener
 			{new JButton(),new JButton(),new JButton(),new JButton(),new JButton()},
 			{new JButton(),new JButton(),new JButton(),new JButton(),new JButton()}
 		};
-	private final static int KEYBOARD_PLACEMENT = 150;
-	private final static int BUTTON_HEIGHT = 52;
-	private final static int BUTTON_WIDTH = 82;
-	private static void buildGUI() 
+	private JPanel mainPanel;
+	public GenCalcGUI() 
 	{
-		/* Clear the panel */
-		panel.removeAll();
-		panel.repaint();
+		//Initialize instance variables
+		mainPanel = new JPanel();
+		answer = new JTextField();
+		JPanel entryPanel = new JPanel();
+		JPanel bottomPanel = new JPanel();
+		JPanel titlePanel = new JPanel();
+		JPanel buttonPanel = new JPanel();
+		JLabel title = new JLabel();
+		JButton menuButton = new JButton();
 		
-		setErrWarning();
-		buildButtons();
-		buildAnswerField();
-	}
-	private static void buildButtons()
-	{	
-		/* Add the 'Main Menu' button to the panel */
-		setMenuButton();
+		//Build layout of mainPanel
+		mainPanel.setLayout(new BorderLayout());
+		mainPanel.add(titlePanel, BorderLayout.PAGE_START);
+		mainPanel.add(entryPanel, BorderLayout.CENTER);
+		mainPanel.add(bottomPanel, BorderLayout.PAGE_END);
 		
-		/* Set the attributes of the JButtons in the buttons array */
-		for (int count1 = 0; count1 < buttons.length; count1++)
-			for (int count2 = 0; count2 < buttons[count1].length; count2++)
-			{
-				buttons[count1][count2].setText(BUTTON_LABELS[count1][count2]);
-				buttons[count1][count2].setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-				buttons[count1][count2].setLocation((int)(COLUMN_COORDS[2] - (BUTTON_WIDTH * (findMaxRowLength(buttons)/2)) + (BUTTON_WIDTH * count2)), KEYBOARD_PLACEMENT + (BUTTON_HEIGHT * count1));
-				panel.add(buttons[count1][count2]);
-			}
+		//Build layout of titlePanel
+		titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
+		title.setText("General Calculator");
+		titlePanel.add(Box.createHorizontalGlue());
+		titlePanel.add(title);
+		titlePanel.add(Box.createHorizontalGlue());
 		
-		/* Reset any action listeners on each button */
+		//Build layout of bottomPanel
+		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+		menuButton.setText("Return to Menu");
+		menuButton.addActionListener(main);
+		bottomPanel.add(Box.createHorizontalGlue());
+		bottomPanel.add(menuButton);
+		bottomPanel.add(Box.createHorizontalGlue());
+		
+		//Build layout of entryPanel
+		entryPanel.setLayout(new BorderLayout());
+		entryPanel.add(buttonPanel, BorderLayout.CENTER);
+		entryPanel.add(answer, BorderLayout.PAGE_START);
+		
+		//Build layout of buttonPanel
+		buttonPanel.setLayout(new GridLayout(buttons[0].length, buttons.length));
+		ButtonHandler handler = new ButtonHandler();
 		for (int count1 = 0; count1 < buttons.length; count1++) 
 			for (int count2 = 0; count2 < buttons[count1].length; count2++) 
 			{
-				buttons[count1][count2].removeActionListener(new ButtonHandler());
-				buttons[count1][count2].addActionListener(new ButtonHandler());
+				buttons[count1][count2].setText(BUTTON_LABELS[count1][count2]);
+				buttonPanel.add(buttons[count1][count2]);
+				buttons[count1][count2].addActionListener(handler);
 			}
+		
+		centerPanel.add(mainPanel, "General Calculator");
 	}
-	private static void buildAnswerField() 
+	public void show() 
 	{
-		answer = new JTextField();
-		answer.setSize((int)(BUTTON_WIDTH * findMaxRowLength(buttons)), TEXT_FIELD_HEIGHT);
-		answer.setLocation(COLUMN_COORDS[2] - (answer.getWidth())/2, 150 - answer.getHeight());
-		panel.add(answer);
-	}
-	private static double findMaxRowLength(JButton[][] buttonArr) 
-	{
-		double maxLength = buttonArr[0].length;
-		for (int count = 1; count < buttonArr.length; count++) 
-			if (buttonArr[count].length > maxLength) 
-				maxLength = buttonArr[count].length;
-		return maxLength;
-	}
-	public void actionPerformed(ActionEvent arg0)
-	{
-		buildGUI();
+		mainLayout.show(centerPanel, "General Calculator");
 	}
 	private static class ButtonHandler implements ActionListener 
 	{
