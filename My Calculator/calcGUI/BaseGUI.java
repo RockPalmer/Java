@@ -1,8 +1,12 @@
 package calcGUI;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -20,48 +24,62 @@ public abstract class BaseGUI
 	protected static final int TEXT_FIELD_WIDTH = 100;
 	private static final int FRAME_WIDTH = 1000;
 	protected static final int[] COLUMN_COORDS = {(2 * FRAME_WIDTH)/8, (3 * FRAME_WIDTH)/8, (4 * FRAME_WIDTH)/8, (5 * FRAME_WIDTH)/8, (6 * FRAME_WIDTH)/8};
-	public static void main(String[] args) 
+	
+	protected static MainMenu main;
+	protected static DescDataGUI dd;
+	protected static LineOfBestFit lobf;
+	protected static GenCalcGUI gc;
+	protected static QuadraticFormula qf;
+	protected static CardLayout mainLayout;
+	protected static JPanel centerPanel;
+	public static void main(String[] args)
 	{
-		buildStandardWindow();
-		MainMenu.buildGUI();
-	}
-	/* Build the panel and window that will be used for all calculator functions */
-	protected static void buildStandardWindow()
-	{
+		//Initialize instance variables
+		mainLayout = new CardLayout();
+		centerPanel = new JPanel();
+		centerPanel.setLayout(mainLayout);
+		main = new MainMenu();
+		dd = new DescDataGUI();
+		lobf = new LineOfBestFit();
+		gc = new GenCalcGUI();
+		qf = new QuadraticFormula();
+		
 		/* Build the frame */
-		frame.getContentPane();
+		//frame.getContentPane();
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.add(panel);
 		frame.setSize(1000, 600);
 		frame.setVisible(true);
 		
 		/* Build the panel */
-		buildStandardPanel();
+		
+		//panel.setLayout(null);
+		panel.setLayout(new BorderLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		panel.add(centerPanel, BorderLayout.CENTER);
+		
+		/* Set the error message at the bottom of the screen */
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+		bottomPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		for (int count = 0; count < errWarning.length; count++) 
+		{
+			errWarning[count] = new JLabel();
+			//errWarning[count].setVisible(true);
+			errWarning[count].setText("");
+			bottomPanel.add(errWarning[count]);
+			//setComponentsSize(errWarning[count]);
+			bottomPanel.add(errWarning[count]);
+		}
+		panel.add(bottomPanel, BorderLayout.PAGE_END);
+		
+		main.show();
 	}
 	protected static void setMenuButton() 
 	{
 		menuButton.setText("Main Menu");
 		setOnPanel(menuButton, 0, 500);
 		menuButton.addActionListener(new MainMenu());
-	}
-	protected static void buildStandardPanel() 
-	{
-		panel.setLayout(null);
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-	}
-	protected static void setErrWarning() 
-	{
-		/* Build error warning label */
-		for (int count = 0; count < errWarning.length; count++) 
-		{
-			errWarning[count] = new JLabel();
-			errWarning[count].setVisible(true);
-			panel.add(errWarning[count]);
-			errWarning[count].setText("");
-			setComponentsSize(errWarning[count]);
-		}
-		errWarning[0].setLocation(COLUMN_COORDS[2] - (errWarning[0].getWidth()/2), 484);
-		errWarning[1].setLocation(COLUMN_COORDS[2] - (errWarning[1].getWidth()/2), 500);
 	}
 	protected static void setComponentsSize(JComponent[] components) 
 	{
