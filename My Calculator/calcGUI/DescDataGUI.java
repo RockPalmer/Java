@@ -1,378 +1,417 @@
 package calcGUI;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-public class DescDataGUI extends DescDataAbstGUI implements ActionListener
+import calcFn.DescDataFn;
+
+public class DescDataGUI extends BaseGUI
 {
-	private static JButton[] buttons;
-	protected static ArrayList<JTextField> textFields = new ArrayList<JTextField>();;
-	protected static ArrayList<JLabel> labels = new ArrayList<JLabel>();;
-	protected static JLabel[] answers;
-	protected static JTextField[] answerBoxes;
-	private static JLabel title;
-	protected static void buildGUI()
+	private static double[] resultVals;
+	private static double[] dataSet;
+	private static Data data;
+	private static Diagram diagram;
+	private static JPanel dPanel;
+	private static CardLayout dLayout;
+	/* Program that will run to move the user from the diagram GUI back to the data */
+	public DescDataGUI() 
 	{
-		/* Clear the panel */
-		frame.remove(DescDataDiagramGUI.panel2);
-		frame.repaint();
-		frame.add(panel);
-		panel.removeAll();
-		panel.repaint();
+		dPanel = new JPanel();
+		dLayout = new CardLayout();
+		dPanel.setLayout(dLayout);
+		centerPanel.add(dPanel, "Describing Data");
 		
-		/* Clear the array Lists */
-		textFields.removeAll(textFields);
-		labels.removeAll(labels);
-		
-		/* Build GUI */
-		setErrWarning();
-		buildButtons();
-		buildAnswers();
-		buildDataEntries();
+		data = new Data();
+		diagram = new Diagram();
 	}
-	private static void buildButtons() 
+	public void show()
 	{
-		setMenuButton();
-		
-		buttons = new JButton[4];
-		
-		/* Fill array with button objects */
-		for (int count = 0; count < buttons.length; count++) 
-			buttons[count] = new JButton();
-		
-		/* Set the text on each button */
-		buttons[0].setText("Calculate");
-		buttons[1].setText("Add Data Point");
-		buttons[2].setText("Remove Data Point");
-		buttons[3].setText("Show Box Plot");
-		
-		/* Set each button on the panel except for the 'Remove Point' 
-		 * button */
-		setOnPanel(buttons[0], 4, 500);
-		setOnPanel(buttons[1], 2, 450);
-		
-		/* Set size and location of 'Remove Point' and 'Show Box PLot' button */
-		setComponentsSize(buttons[2]);
-		setComponentsSize(buttons[3]);
-		buttons[2].setLocation(COLUMN_COORDS[1] - (buttons[2].getWidth()/2), 450);
-		buttons[3].setLocation(750, 200 + buttons[3].getHeight());
-		
-		/* Add required ActionListeners to each one */
-		buttons[0].removeActionListener(new Calculate());
-		buttons[0].addActionListener(new Calculate());
-		buttons[1].removeActionListener(new addPoint());
-		buttons[1].addActionListener(new addPoint());
-		buttons[2].removeActionListener(new removePoint());
-		buttons[2].addActionListener(new removePoint());
-		buttons[3].removeActionListener(new ShowBoxPlot());
-		buttons[3].addActionListener(new ShowBoxPlot());
-		
+		mainLayout.show(centerPanel, "Describing Data");
+		data.show();
 	}
-	private static void buildDataFields() 
-	{	
-		/* Build 1 text field for the user to start with */
-		JTextField textBox = new JTextField();
-		
-		/* Set Size and location */
-		textBox.setSize(TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
-		textBox.setLocation(frame.getWidth()/8 - TEXT_FIELD_WIDTH/2, 60);
-		textBox.setText("");
-		
-		/* Add it to the panel */
-		panel.add(textBox);
-		
-		/* Add the text field to the text field array list for storage */
-		textFields.add(textBox);
-		
-	}
-	private static void buildAnswerFields() 
+	private static class Data
 	{
-		/* Set the size of the answerBoxes array */
-		answerBoxes = new JTextField[7];
-		
-		/* Fill array with JTextField objects, set their location and size, and 
-		 * add them to the panel */
-		for (int count = 0; count < answerBoxes.length; count++) 
+		private static ArrayList<JTextField> textFields;
+		private static ArrayList<JLabel> labels;
+		private static JTextField[] answerBoxes;
+		private static JPanel mainPanel;
+		private static JPanel dataValsPanel;
+		private static JPanel topOpPanel;
+		private JButton addPoint;
+		private JButton removePoint;
+		private JButton mainMenu;
+		private JButton calculate;
+		private JButton showPlot;
+		private static final int DATA_ENTRY_SIZE = 7;
+		private static final Dimension ANSWER_ENTRY_SIZE = new Dimension(60,20);
+		public Data() 
 		{
-			answerBoxes[count] = new JTextField();
-			int xCoord = answers[count].getX() + answers[count].getWidth() + 2;
-			int width = TEXT_FIELD_WIDTH - answers[count].getWidth();
-			answerBoxes[count].setBounds(xCoord, 60 + count * (TEXT_FIELD_HEIGHT + 2), width, TEXT_FIELD_HEIGHT);
-			panel.add(answerBoxes[count]);
-		}
-		
-	}
-	private static void buildSurroundingLabels() 
-	{
-		/* Build 1 new label to sit between the text fields */
-		JLabel label = new JLabel(",");
-		
-		/* Set each label size based on the amount of text in each one */
-		setComponentsSize(label);
-		
-		/* Set the labels between the text fields */
-		int xCoord = textFields.get(0).getX() + textFields.get(0).getWidth() + 13 - (label.getWidth()/2);
-		label.setLocation(xCoord, 60);
-		
-		/* Add each label to the JLabel array list */
-		labels.add(label);
-	}
-	private static void buildAnswerLabels()
-	{
-		/* Initialize JLabel array */
-		answers = new JLabel[7];
-		
-		/* fill answers with JLabel objects */
-		for (int count = 0; count < answers.length; count++) 
-			answers[count] = new JLabel();
-		
-		/* Set the text of each answer */
-		answers[0].setText("Mean = ");
-		answers[1].setText("Median = ");
-		answers[2].setText("Mode = ");
-		answers[3].setText("Range = ");
-		answers[4].setText("Q1 = ");
-		answers[5].setText("Q3 = ");
-		answers[6].setText("\u03C3 = ");
-		
-		/* Set the size of each answer based on the amount of text contained 
-		 * in it */
-		setComponentsSize(answers);
-		
-		/* Set each answer on the panel */
-		for (int count = 0; count < answers.length; count++) 
-		{
-			answers[count].setLocation(COLUMN_COORDS[4], 60 + count * (TEXT_FIELD_HEIGHT + 2));
-			panel.add(answers[count]);
-		}
-	}
-	private static void buildDataEntries() 
-	{
-		buildDataFields();
-		buildSurroundingLabels();
-		
-		/* Build the title for the data and set it on the panel */
-		title = new JLabel("Data set:");
-		panel.add(title);
-		
-		/* Set size of title */
-		setComponentsSize(title);
-		
-		/* Set the location of the title */
-		title.setLocation(textFields.get(0).getX(), 30);
-	}
-	private static void buildAnswers() 
-	{
-		buildAnswerLabels();
-		buildAnswerFields();
-	}
-	public void actionPerformed(ActionEvent arg0) 
-	{
-		buildGUI();
-	}
-	public static JButton[] getButtons() 
-	{
-		JButton[] tempButtons = new JButton[2];
-		tempButtons[0] = buttons[1];
-		tempButtons[1] = buttons[2];
-		return tempButtons;
-	}
-	protected static class addPoint implements ActionListener 
-	{
-		private static int xIndex;
-		private static int yIndex;
-		public void actionPerformed(ActionEvent arg0) 
-		{
-			addNewPoint();
-		}
-		protected static void addNewPoint() 
-		{
-			/* If the data set goes from 1 value to 2 values, the buttons will be adjusted */
-			if (textFields.size() == 1) 
-				addRemoveButton();
-			else if (textFields.size() == 67) 
-				removeAddButton();
+			//Initialize instance variables
+			String[] answerLabels = {"Mean = ","Median = ","Mode = ","Range = ","Q1 = ","Q3 = ","\u03C3 = "};
+			textFields = new ArrayList<JTextField>();
+			labels = new ArrayList<JLabel>();
+			answerBoxes = new JTextField[7];
+			addPoint = new JButton();
+			removePoint = new JButton();
+			showPlot = new JButton();
+			mainMenu = new JButton();
+			calculate = new JButton();
+			mainPanel = new JPanel();
+			dataValsPanel = new JPanel();
+			topOpPanel = new JPanel();
+			JPanel bottomOpPanel = new JPanel();
+			JPanel dataPanel = new JPanel();
+			JPanel keyValsPanel = new JPanel();
+			JPanel optionsPanel = new JPanel();
+			JPanel titlePanel = new JPanel();
+			JPanel answerPanel = new JPanel();
+			JPanel[] answerVals = new JPanel[7];
+			JScrollPane dataView = new JScrollPane();
+			JLabel dataSet = new JLabel();
+			JLabel keyValues = new JLabel();
+			ButtonHandler handler = new ButtonHandler();
 			
-			xIndex = textFields.size() % 4;
-			yIndex = (textFields.size() - xIndex)/4;
+			//Build layout of mainPanel
+			mainPanel.setLayout(new BorderLayout());
+			mainPanel.add(dataPanel, BorderLayout.CENTER);
+			mainPanel.add(keyValsPanel, BorderLayout.LINE_END);
+			mainPanel.add(optionsPanel, BorderLayout.PAGE_END);
 			
-			resetTextFields();
-			resetSurroundingLabels();
-		}
-		private static void addRemoveButton() 
-		{
-			/* Move the 'Add Data Point' Button to make room for the 'Remove Data Point' button */
-			getButtons()[0].setLocation(COLUMN_COORDS[1] - (getButtons()[0].getWidth()/2), getButtons()[0].getY());
+			//Build layout of dataPanel
+			dataPanel.setLayout(new BorderLayout());
+			dataPanel.add(titlePanel, BorderLayout.PAGE_START);
+			dataPanel.add(dataView, BorderLayout.CENTER);
 			
-			/* Add the 'Remove Data Point' button and set its location to the bottom right of the panel */
-			panel.add(getButtons()[1]);
-			getButtons()[1].setLocation(COLUMN_COORDS[3] - (getButtons()[1].getWidth()/2), getButtons()[0].getY());
+			//Build layout of titlePanel
+			titlePanel.setLayout(new FlowLayout());
+			dataSet.setText("Data Set");
+			titlePanel.add(dataSet);
 			
-			/* Update the panel */
-			panel.repaint();
-		}
-		private static void removeAddButton() 
-		{
-			/* Remove 'Add Data Point' button */
-			panel.remove(getButtons()[0]);
+			//Build layout of dataView
+			dataView.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+			dataView.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+			dataView.setViewportView(dataValsPanel);
 			
-			/* Move 'Remove Data Point' button */
-			getButtons()[1].setLocation(COLUMN_COORDS[2] - (getButtons()[1].getWidth()/2), getButtons()[0].getY());
-			
-			/* Update panel */
-			panel.repaint();
-		}
-		private static void resetTextFields() 
-		{
-			/* Initialize new JTextField object */
-			JTextField dataField = new JTextField();
-			
-			/* Add text field to panel */
-			panel.add(dataField);
-			
-			/* Set dataField size to standard text field size */
-			dataField.setSize(TEXT_FIELD_WIDTH, TEXT_FIELD_HEIGHT);
-			
-			/* Set the text in the text field to an empty String */
-			dataField.setText("");
-			
-			/* Set location of dataField */
-			dataField.setLocation((xIndex + 1) * frame.getWidth()/8 - TEXT_FIELD_WIDTH/2, 60 + ((TEXT_FIELD_HEIGHT + 2) * yIndex));
-			
-			/* Add text field to text field array list */
-			textFields.add(dataField);
-		}
-		private static void resetSurroundingLabels() 
-		{
-			if (textFields.size() == 2) 
-				panel.add(labels.get(0));
-			else
+			//Build layout of dataValsPanel
+			dataValsPanel.setLayout(new FlowLayout(FlowLayout.LEADING));
+			for (int count = 0; count < 3; count++)
 			{
-				/* Initialize new JLabel object */
-				JLabel label = new JLabel(",");
-				
-				/* Set the size of label */
-				setComponentsSize(label);
-				
-				/* Set the location of the new label */
-				label.setLocation(textFields.get(textFields.size() - 2).getX() + TEXT_FIELD_WIDTH + 13 - (label.getWidth()/2), textFields.get(textFields.size() - 2).getY());
-				
-				/* Add label to label array list */
-				labels.add(label);
-				
-				/* Add label to panel */
-				panel.add(label);
+				JTextField t = new JTextField();
+				t.setColumns(DATA_ENTRY_SIZE);
+				JLabel l = new JLabel(",");
+				textFields.add(t);
+				labels.add(l);
+				dataValsPanel.add(t);
+				dataValsPanel.add(l);
+			}
+			
+			//Build layout of keyValsPanel
+			keyValsPanel.setLayout(new BoxLayout(keyValsPanel, BoxLayout.Y_AXIS));
+			keyValues.setText("Key Values");
+			showPlot.setText("Show Box Plot");
+			showPlot.addActionListener(handler);
+			keyValues.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+			answerPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+			showPlot.setAlignmentX(JButton.CENTER_ALIGNMENT);
+			keyValsPanel.add(keyValues);
+			keyValsPanel.add(answerPanel);
+			keyValsPanel.add(showPlot);
+			
+			//Build layout of answerPanel
+			answerPanel.setLayout(new BoxLayout(answerPanel, BoxLayout.Y_AXIS));
+			for (int count = 0; count < answerVals.length; count++) 
+			{
+				answerVals[count] = new JPanel();
+				answerVals[count].setAlignmentX(JPanel.RIGHT_ALIGNMENT);
+				answerVals[count].setLayout(new BoxLayout(answerVals[count], BoxLayout.X_AXIS));
+				answerVals[count].add(new JLabel(answerLabels[count]));
+				JTextField t = new JTextField();
+				t.setMaximumSize(ANSWER_ENTRY_SIZE);
+				answerBoxes[count] = t;
+				answerVals[count].add(t);
+				answerPanel.add(answerVals[count]);
+			}
+			
+			//Build layout of optionsPanel
+			optionsPanel.setLayout(new GridLayout(2,1,0,5));
+			optionsPanel.add(topOpPanel);
+			optionsPanel.add(bottomOpPanel);
+			
+			//Build layout of topOpPanel
+			topOpPanel.setLayout(new BoxLayout(topOpPanel, BoxLayout.X_AXIS));
+			addPoint.setText("Add Point");
+			removePoint.setText("Remove Point");
+			addPoint.addActionListener(handler);
+			removePoint.addActionListener(handler);
+			topOpPanel.add(Box.createHorizontalGlue());
+			topOpPanel.add(addPoint);
+			topOpPanel.add(Box.createHorizontalGlue());
+			topOpPanel.add(removePoint);
+			topOpPanel.add(Box.createHorizontalGlue());
+			
+			//Build layout of bottomOpPanel
+			bottomOpPanel.setLayout(new BoxLayout(bottomOpPanel, BoxLayout.X_AXIS));
+			mainMenu.setText("Main Menu");
+			calculate.setText("Calculate");
+			mainMenu.addActionListener(main);
+			calculate.addActionListener(handler);
+			bottomOpPanel.add(Box.createHorizontalGlue());
+			bottomOpPanel.add(mainMenu);
+			bottomOpPanel.add(Box.createHorizontalGlue());
+			bottomOpPanel.add(Box.createRigidArea(new Dimension(10,0)));
+			bottomOpPanel.add(Box.createHorizontalGlue());
+			bottomOpPanel.add(calculate);
+			bottomOpPanel.add(Box.createHorizontalGlue());
+			
+			dPanel.add(mainPanel, "Data");
+		}
+		public void show() 
+		{
+			dLayout.show(dPanel, "Data");
+		}
+		private class ButtonHandler implements ActionListener
+		{
+			public void actionPerformed(ActionEvent arg0) 
+			{
+				JButton source = (JButton)arg0.getSource();
+				if (source.equals(addPoint))
+				{
+					//addNewPoint();
+					JTextField t = new JTextField();
+					JLabel l = new JLabel(",");
+					t.setColumns(DATA_ENTRY_SIZE);
+					textFields.add(t);
+					labels.add(l);
+					dataValsPanel.add(t);
+					dataValsPanel.add(l);
+					
+					if (textFields.size() == 2) 
+					{
+						topOpPanel.add(removePoint);
+						topOpPanel.add(Box.createHorizontalGlue());
+						topOpPanel.repaint();
+						topOpPanel.revalidate();
+					}
+					
+					dataValsPanel.repaint();
+					dataValsPanel.revalidate();
+				}
+				else if (source.equals(removePoint))
+				{
+					JTextField t = textFields.get(textFields.size() - 1);
+					JLabel l = labels.get(labels.size() - 1);
+					dataValsPanel.remove(l);
+					dataValsPanel.remove(t);
+					textFields.remove(textFields.size() - 1);
+					labels.remove(labels.size() - 1);
+					
+					if (textFields.size() == 1) 
+					{
+						topOpPanel.removeAll();
+						topOpPanel.add(Box.createHorizontalGlue());
+						topOpPanel.add(addPoint);
+						topOpPanel.add(Box.createHorizontalGlue());
+						topOpPanel.repaint();
+						topOpPanel.revalidate();
+					}
+					
+					dataValsPanel.repaint();
+					dataValsPanel.revalidate();
+				}
+				else if (source.equals(calculate)) 
+				{
+					try
+					{
+						//Check if any text field entries are invalid
+						for (int count = 0; count < textFields.size(); count++) 
+						{
+							Double.parseDouble(textFields.get(count).getText());
+						}
+						dataSet = new double[textFields.size()];
+						for (int count = 0; count < textFields.size(); count++)
+							dataSet[count] = Double.parseDouble(textFields.get(count).getText());
+						resultVals = DescDataFn.describeData(dataSet);
+						
+						for (int count = 0; count < resultVals.length; count++)
+							answerBoxes[count].setText("" + resultVals[count]);
+						
+						diagram.makeNewPlot(dataSet, resultVals[4], resultVals[1], resultVals[5]);
+					}
+					catch(NumberFormatException e) 
+					{
+						System.out.println("ERROR");
+					}
+				}
+				else 
+				{
+					diagram.show();
+				}
 			}
 		}
 	}
-	private static class removePoint implements ActionListener
+	private class Diagram
 	{
-		public void actionPerformed(ActionEvent arg0) 
-		{
-			/* If the data set is only 1, the button will be adjusted */
-			if (textFields.size() == 2) 
-				removeRemoveButtons();
-			else if (textFields.size() == 68) 
-				addAddButton();
-			resetTextFields();
-			resetSurroundingLabels();
+		private JLabel[] dataLabels;
+		private final int DIAGRAM_HEIGHT = 300;
+		private double[] diagramData;
+		private double smallest;
+		private double q1;
+		private double q2;
+		private double q3;
+		private double largest;
+		private JPanel middlePanel;
+		/* Replaces the data panel with the newly-built diagram panel */
+		public Diagram() 
+		{	
+			//Initialize instance variables
+			middlePanel = new JPanel();
+			JPanel diagramPanel = new JPanel();
+			JPanel bottomPanel = new JPanel();
+			JButton returnButton = new JButton();
+			
+			//Build Layout of diagramPanel
+			diagramPanel.setLayout(new BorderLayout());
+			diagramPanel.add(middlePanel, BorderLayout.CENTER);
+			diagramPanel.add(bottomPanel, BorderLayout.PAGE_END);
+			
+			//Build Layout of bottomPanel
+			bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
+			returnButton.setText("Return to Data");
+			returnButton.addActionListener(new toData());
+			bottomPanel.add(Box.createHorizontalGlue());
+			bottomPanel.add(returnButton);
+			bottomPanel.add(Box.createHorizontalGlue());
+
+			//Build Layout of middlePanel
+			middlePanel.setLayout(new BorderLayout());
+			middlePanel.add(Box.createHorizontalGlue());
+			middlePanel.add(new JLabel("No Data Entered"));
+			middlePanel.add(Box.createHorizontalGlue());
+			
+			dPanel.add(diagramPanel, "Diagram Panel");
 		}
-		private static void removeRemoveButtons() 
+		public void show()
 		{
-			/* Remove the 'Remove Data Point' button */
-			panel.remove(getButtons()[1]);
-			
-			/* Move the 'Add Data Point' button to the center of the panel */
-			getButtons()[0].setLocation(COLUMN_COORDS[2] - (getButtons()[0].getWidth()/2), getButtons()[0].getY());
-			
-			/* Update the panel */
-			panel.repaint();
+			dLayout.show(dPanel, "Diagram Panel");
 		}
-		private static void addAddButton() 
+		public void makeNewPlot(double[] newData, double qu1, double qu2, double qu3) 
 		{
-			/* Move 'Remove Data Point' to the right side of the panel */
-			getButtons()[1].setLocation(COLUMN_COORDS[3] - (getButtons()[1].getWidth()/2), getButtons()[1].getY());
+			/* Sort the data from smallest to largest */
+			Arrays.sort(newData);
 			
-			/* Add 'Add Data Point' button to the left side of the panel */
-			panel.add(getButtons()[0]);
-			getButtons()[0].setLocation(COLUMN_COORDS[1] - (getButtons()[0].getWidth()/2), getButtons()[0].getY());
+			/* Set parameter variables */
+			this.diagramData = newData;
+			this.q1 = qu1;
+			this.q2 = qu2;
+			this.q3 = qu3;
+			this.smallest = diagramData[0];
+			this.largest = diagramData[diagramData.length - 1];
 			
-			/* Update panel */
-			panel.repaint();
+			//Reset middlePanel
+			Plot plot = new Plot();
+			middlePanel.removeAll();
+			middlePanel.add(plot);
 		}
-		private static void resetTextFields() 
+		/* Defines the graphics of the new panel object that will contain the box plot diagram */
+		private class Plot extends JPanel
 		{
-			/* Remove the textField from the panel */
-			panel.remove(textFields.get(textFields.size() - 1));
-			
-			/* Set the value of the removed text field as null */
-			textFields.set(textFields.size() - 1, null);
-			
-			/* Remove the text field from the array list */
-			textFields.remove(textFields.size() - 1);
-			
-			/* Update the panel */
-			panel.repaint();
-		}
-		private static void resetSurroundingLabels() 
-		{
-			
-			/* Remove the label from the panel */
-			panel.remove(labels.get(labels.size() - 1));
-			
-			if (textFields.size() != 1) 
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+			public Plot()
 			{
-				/* Set the value of the removed text field as null */
-				labels.set(labels.size() - 1, null);
+				super();
+				this.setLayout(null);
+				/* Fill the JLabel array with JLabel objects */
+				dataLabels = new JLabel[dataSet.length + 5];
+				for (int count = 0; count < dataLabels.length; count++) 
+					dataLabels[count] = new JLabel();
 				
-				/* Remove the label from the array list */
-				labels.remove(labels.size() - 1);
+				/* Set the text in each data label */
+				for(int count = 0; count < dataSet.length; count++) 
+					dataLabels[count].setText("" + dataSet[count]);
+				dataLabels[dataLabels.length - 1].setText("" + smallest);
+				dataLabels[dataLabels.length - 2].setText("" + largest);
+				dataLabels[dataLabels.length - 3].setText("" + q3);
+				dataLabels[dataLabels.length - 4].setText("" + q2);
+				dataLabels[dataLabels.length - 5].setText("" + q1);
+				
+				/* Set the size and location of each data label that references a data point */
+				double conversionFactor = 750/(largest - smallest);
+				setComponentsSize(dataLabels);
+				final int LABEL_HEIGHT = dataLabels[0].getHeight();
+				for (int count = 0; count < dataLabels.length - 5; count++) 
+					dataLabels[count].setLocation((int)Math.round((dataSet[count]-smallest) * conversionFactor) + 125 - dataLabels[count].getWidth()/2, DIAGRAM_HEIGHT + 10 + LABEL_HEIGHT);
+				
+				/* Set the location of each data label that references a diagram value */
+				dataLabels[dataLabels.length - 1].setLocation(125 - (dataLabels[dataLabels.length - 1].getWidth()/2), DIAGRAM_HEIGHT - 120 - LABEL_HEIGHT);
+				dataLabels[dataLabels.length - 2].setLocation(875 - (dataLabels[dataLabels.length - 2].getWidth()/2), DIAGRAM_HEIGHT - 120 - LABEL_HEIGHT);
+				dataLabels[dataLabels.length - 3].setLocation((int)Math.round((q3-smallest) * conversionFactor) + 125 - (dataLabels[dataLabels.length - 3].getWidth()/2), DIAGRAM_HEIGHT - 120 - LABEL_HEIGHT);
+				dataLabels[dataLabels.length - 4].setLocation((int)Math.round((q2-smallest) * conversionFactor) + 125 - (dataLabels[dataLabels.length - 4].getWidth()/2), DIAGRAM_HEIGHT - 120 - LABEL_HEIGHT);
+				dataLabels[dataLabels.length - 5].setLocation((int)Math.round((q1-smallest) * conversionFactor) + 125 - (dataLabels[dataLabels.length - 5].getWidth()/2), DIAGRAM_HEIGHT - 120 - LABEL_HEIGHT);
+				
+				for (int count = 0; count < dataLabels.length; count++) 
+					this.add(dataLabels[count]);
 			}
-			
-			/* Update the panel */
-			panel.repaint();
-		}
-	}
-	private static class Calculate implements ActionListener
-	{
-		public void actionPerformed(ActionEvent arg0) 
-		{
-			/* If none of the text fields designated for input are empty, the program
-			 * proceeds with the standard button operation */
-			if (calcErr.TextFieldErr.isValidInput(textFields, errWarning)) 
+			/* Override that paintComponent method of the JPanel class to add the box plot diagram */
+			protected void paintComponent(Graphics g)
 			{
-				/* update the dataSet variable */
-				dataSet = new double[textFields.size()];
-				for (int count = 0; count < dataSet.length; count++) 
-					dataSet[count] = Double.parseDouble(textFields.get(count).getText());
+				/**Draw number line**/
 				
-				/* calculate the output numbers to describe the data and store them
-				 * resultVals variable */
-				resultVals = calcFn.DescDataFn.describeData(dataSet);
+				/* Draw basic number line just with the end points (This should never change) */
+				g.drawLine(125, DIAGRAM_HEIGHT, 875, DIAGRAM_HEIGHT);
+				g.drawLine(125, DIAGRAM_HEIGHT - 20, 125, DIAGRAM_HEIGHT + 20);
+				g.drawLine(875, DIAGRAM_HEIGHT - 20, 875, DIAGRAM_HEIGHT + 20);
+			
+				/* Add an extra tick mark for each data point in the set */
+				double conversionFactor = 750/(largest - smallest);
+				for (int count = 0; count < diagramData.length; count++) 
+					if (count != smallest && count != largest)
+						g.drawLine((int)Math.round((diagramData[count]-smallest) * conversionFactor) + 125, DIAGRAM_HEIGHT - 10, (int)Math.round((diagramData[count]-smallest) * conversionFactor) + 125, DIAGRAM_HEIGHT + 10);
 				
-				/* Fill the answer boxes with their corresponding values */
-				for (int count = 0; count < resultVals.length; count++) 
-					answerBoxes[count].setText("" + resultVals[count]);
+				/**Draw Box Plot**/
 				
-				/* Add the 'Show BoxPlot' button to the panel */
-				panel.add(buttons[3]);
-				panel.repaint();
+				/* Draw the end points of the box plot (This should not change either */
+				g.drawLine(125, DIAGRAM_HEIGHT - 120, 125, DIAGRAM_HEIGHT - 80);
+				g.drawLine(875, DIAGRAM_HEIGHT - 120, 875, DIAGRAM_HEIGHT - 80);
+			
+				/* Build the rest of the box plot based on the data set provided */
+				int q1Size = (int)Math.round((q1-smallest) * conversionFactor) + 125;
+				int q2Size = (int)Math.round((q2-smallest) * conversionFactor) + 125;
+				int q3Size = (int)Math.round((q3-smallest) * conversionFactor) + 125;
 				
-				/* build panel2 based on the above data to be added if the user clicks 'Show Box Plot' */
-				setPanel2();
+				g.drawLine(125, DIAGRAM_HEIGHT - 100, q1Size, DIAGRAM_HEIGHT - 100);
+				g.drawLine(q1Size, DIAGRAM_HEIGHT - 120, q1Size, DIAGRAM_HEIGHT - 80);
+				g.drawLine(q1Size, DIAGRAM_HEIGHT - 120, q3Size, DIAGRAM_HEIGHT - 120);
+				g.drawLine(q1Size, DIAGRAM_HEIGHT - 80, q3Size, DIAGRAM_HEIGHT - 80);
+				g.drawLine(q2Size, DIAGRAM_HEIGHT - 120, q2Size, DIAGRAM_HEIGHT - 80);
+				g.drawLine(q3Size, DIAGRAM_HEIGHT - 120, q3Size, DIAGRAM_HEIGHT - 80);
+				g.drawLine(q3Size, DIAGRAM_HEIGHT - 100, 875, DIAGRAM_HEIGHT - 100);
 			}
 		}
-	}
-	private static class ShowBoxPlot implements ActionListener
-	{
-		public void actionPerformed(ActionEvent arg0) 
+		private class toData implements ActionListener
 		{
-			GoToDiagram();
+			public void actionPerformed(ActionEvent arg0) 
+			{
+				data.show();
+			}
 		}
 	}
 }
