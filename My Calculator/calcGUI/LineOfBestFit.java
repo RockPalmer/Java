@@ -1,184 +1,142 @@
 package calcGUI;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-public class LineOfBestFit extends BaseGUI implements ActionListener
+public class LineOfBestFit extends BaseGUI
 {
 	private static JButton[] buttons;
-	protected static ArrayList<JTextField[]> textFields = new ArrayList<JTextField[]>();
-	protected static ArrayList<JLabel[]> labels = new ArrayList<JLabel[]>();
-	private static JLabel[] header;
-	protected static JLabel result;
-	protected static final int TEXT_ARRAY_SIZE = 2;
-	private static final int LABEL_ARRAY_SIZE = 3;
-	private static void buildGUI()
+	private static ArrayList<JTextField[]> textFields = new ArrayList<JTextField[]>();
+	private ArrayList<JPanel> points = new ArrayList<JPanel>();
+	private static JLabel result;
+	private JPanel optionsPanel;
+	private JPanel entryPanel;
+	private JButton addPoint;
+	private JButton removePoint;
+	private JButton calculate;
+	private JButton menuButton;
+	private static final Dimension TEXT_FIELD_SIZE = new Dimension(60,20);
+	private static final int TEXT_ARRAY_SIZE = 2;
+	public LineOfBestFit() 
 	{
-		/* Clear the panel */
-		panel.removeAll();
-		panel.repaint();
+		//Initialize instance variables
+		JPanel mainPanel = new JPanel();
+		JPanel buttonPanel = new JPanel();
+		JPanel titlePanel = new JPanel();
+		JPanel dataPanel = new JPanel();
+		JPanel answerPanel = new JPanel();
+		JPanel header = new JPanel();
+		JScrollPane dataView = new JScrollPane();
+		JLabel title = new JLabel();
+		ButtonHandler handler = new ButtonHandler();
+		entryPanel = new JPanel();
+		optionsPanel = new JPanel();
+		result = new JLabel();
+		addPoint = new JButton();
+		removePoint = new JButton();
+		calculate = new JButton();
+		menuButton = new JButton();
 		
-		setErrWarning();
-		buildButtons();
-		buildTextFields();
-		buildLabels();
-	}
-	private static void buildLabels() 
-	{	
-		buildHeader();
-		buildResult();
-		buildSurroundingLabels();
-	}
-	private static void buildHeader() 
-	{
-		/* Initialize header array */
-		header = new JLabel[5];
+		//Build layout of mainPanel
+		mainPanel.setLayout(new BorderLayout());
+		mainPanel.add(titlePanel, BorderLayout.PAGE_START);
+		mainPanel.add(dataPanel, BorderLayout.CENTER);
+		mainPanel.add(buttonPanel, BorderLayout.PAGE_END);
 		
-		/* Fill header array with JLabels with text */
-		header[0] = new JLabel("(");
-		header[1] = new JLabel("x");
-		header[2] = new JLabel(",");
-		header[3] = new JLabel("y");
-		header[4] = new JLabel(")");
+		//Build layout of titlePanel
+		titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.X_AXIS));
+		title.setText("Line of Best Fit Calculator");
+		titlePanel.add(Box.createHorizontalGlue());
+		titlePanel.add(title);
+		titlePanel.add(Box.createHorizontalGlue());
 		
-		/* Add the header objects to the panel */
-		addComponentsToPanel(header);
+		//Build layout of buttonPanel
+		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+		menuButton.setText("Return to Menu");
+		calculate.setText("Calculate");
+		menuButton.addActionListener(handler);
+		calculate.addActionListener(handler);
+		buttonPanel.add(Box.createHorizontalGlue());
+		buttonPanel.add(menuButton);
+		buttonPanel.add(Box.createHorizontalGlue());
+		buttonPanel.add(Box.createRigidArea(new Dimension(10,0)));
+		buttonPanel.add(Box.createHorizontalGlue());
+		buttonPanel.add(calculate);
+		buttonPanel.add(Box.createHorizontalGlue());
 		
-		/* Set the size of the header objects */
-		setComponentsSize(header);
+		//Build layout of dataPanel
+		dataPanel.setLayout(new BorderLayout());
+		dataPanel.add(answerPanel, BorderLayout.PAGE_START);
+		dataPanel.add(dataView, BorderLayout.CENTER);
+		dataPanel.add(optionsPanel, BorderLayout.PAGE_END);
 		
-		/* Set the location each piece of the header to line up with the 
-		 * text fields below it */
-		for (int count = 0; count < COLUMN_COORDS.length; count++) 
-			header[count].setLocation(COLUMN_COORDS[count] - (header[count].getWidth()/2), 90);
-	}
-	private static void buildResult() 
-	{
-		/* Initialize result with text */
-		result = new JLabel("Equation: y = _x + _");
+		//Build layout of answerPanel
+		answerPanel.setLayout(new BoxLayout(answerPanel, BoxLayout.Y_AXIS));
+		result.setText("y = mx + b");
+		result.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		header.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+		header.setLayout(new FlowLayout(FlowLayout.CENTER));
+		header.add(new JLabel("("));
+		header.add(new JLabel("x"));
+		header.add(new JLabel(","));
+		header.add(new JLabel("y"));
+		header.add(new JLabel(")"));
+		answerPanel.add(result);
+		answerPanel.add(header);
 		
-		/* Set the size and location of the result */
-		Dimension dim = result.getPreferredSize();
-		result.setBounds(COLUMN_COORDS[2] - (dim.width/2), 30, dim.width, dim.height);
-		
-		/* Set the result into the panel */
-		panel.add(result);
-	}
-	private static void buildSurroundingLabels() 
-	{
-		/* Clear current array list content */
-		labels.removeAll(labels);
-		
-		/* Create 2 sets of 3 labels to go with the first 
-		 * 4 text fields that we just created */
-		for (int count = 0; count < 2; count++) 
-		{	
-			/* Create new JLabel array with size pf 3 */
-			JLabel[] labelArr = new JLabel[LABEL_ARRAY_SIZE];
-			
-			/* Set the text of the 3 labels with '(' , ',' and ')' respectively 
-			 * to show the user which box to put their x and y coordinates in */
-			labelArr[0] = new JLabel("(");
-			labelArr[1] = new JLabel(",");
-			labelArr[2] = new JLabel(")");
-			
-			/* Set the size of each label to fit the text contained in it */
-			setComponentsSize(labelArr);
-			
-			/* Add each label to the panel */
-			addComponentsToPanel(labelArr);
-			
-			/* Set the location of each label between the 2 text fields that have 
-			 * already been created */
-			labelArr[0].setLocation(COLUMN_COORDS[0] - (labelArr[0].getWidth()/2), 120 + (count * (TEXT_FIELD_HEIGHT + 2)));
-			labelArr[1].setLocation(COLUMN_COORDS[2] - (labelArr[1].getWidth()/2), 120 + (count * (TEXT_FIELD_HEIGHT + 2)));
-			labelArr[2].setLocation(COLUMN_COORDS[4] - (labelArr[2].getWidth()/2), 120 + (count * (TEXT_FIELD_HEIGHT + 2)));
-			
-			/* Add the JLabel array to the JLabel[] arrayList for storage and ease 
-			 * of access */
-			labels.add(labelArr);
-		}
-	}
-	private static void buildButtons() 
-	{
-		setMenuButton();
-		
-		/* Initialize button array */
-		buttons = new JButton[3];
-		
-		/* Fill buttons array and add each one to the panel */
-		for (int count = 0; count < buttons.length; count++) 
-			buttons[count] = new JButton();
-		panel.add(buttons[0]);
-		panel.add(buttons[1]);
-		
-		/* Set the text of each button */
-		buttons[0].setText("Add Point");
-		buttons[1].setText("Calculate");
-		buttons[2].setText("Remove Point");
-		
-		/* Add action listener to 'Add Point' to add space for another set of coordinates */
-		buttons[0].addActionListener(new AddPoint());
-		
-		/* Add action listener to 'Remove Point' to remove one set of coordinates */
-		buttons[1].addActionListener(new Calculate());
-		
-		/* Add action listener to 'Calculate' button to calculate
-		 * the line of best fit */
-		buttons[2].addActionListener(new RemovePoint());
-		
-		/* Set the size of each button based on the text in it */
-		setComponentsSize(buttons);
-		
-		/* Set the location of each button */
-		buttons[0].setLocation(COLUMN_COORDS[2] - (buttons[0].getWidth()/2), 172);
-		buttons[1].setLocation(COLUMN_COORDS[4] - (buttons[1].getWidth()/2), 500);
-	}
-	private static void buildTextFields() 
-	{
-		/* Clear current array list content */
-		textFields.removeAll(textFields);
-		
-		/* Add 2 sets of 2 text fields to start with where the user can put 
-		 * their first x and y coordinates */
-		
-		for (int count1 = 0; count1 < 2; count1++) 
+		//Build layout of dataView
+		dataView.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		dataView.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		dataView.setViewportView(entryPanel);
+		entryPanel.setLayout(new GridLayout(0,1));
+		for (int count1 = 0; count1 < 2; count1++)
 		{
-			/* Create new text field array with length of 2 */
-			JTextField[] texts = new JTextField[TEXT_ARRAY_SIZE];
-			for (int count2 = 0; count2 < texts.length; count2++) 
+			JPanel p = new JPanel();
+			JTextField[] point = new JTextField[TEXT_ARRAY_SIZE];
+			for (int count = 0; count < point.length; count++) 
 			{
-				/* Fill array with text field objects */
-				texts[count2] = new JTextField();
-				
-				/* Set the size of each text field to be the same */
-				texts[count2].setSize(100, TEXT_FIELD_HEIGHT);
-				
-				/* Set the text in each text field to an empty String */
-				texts[count2].setText("");
+				point[count] = new JTextField();
+				point[count].setPreferredSize(TEXT_FIELD_SIZE);
 			}
-			/* Add each object to the panel */
-			addComponentsToPanel(texts);
-			
-			/* Set the locations of the text fields into 2 columns 
-			 * right above the 'Add Point' button */
-			texts[0].setLocation(COLUMN_COORDS[1] - (texts[0].getWidth()/2), 120 + (count1 * (TEXT_FIELD_HEIGHT + 2)));
-			texts[1].setLocation(COLUMN_COORDS[3] - (texts[1].getWidth()/2), 120 + (count1 * (TEXT_FIELD_HEIGHT + 2)));
-			
-			/* Add the text fields to the JTextField array list for 
-			 * easy access and storage */
-			textFields.add(texts);
+			p.setLayout(new FlowLayout(FlowLayout.CENTER));
+			p.add(new JLabel("("));
+			p.add(point[0]);
+			p.add(new JLabel(","));
+			p.add(point[1]);
+			p.add(new JLabel(")"));
+			textFields.add(point);
+			points.add(p);
+			entryPanel.add(p);
 		}
+		
+		//Build layout of optionsPanel
+		addPoint.setText("Add Point");
+		removePoint.setText("Remove Point");
+		addPoint.addActionListener(handler);
+		removePoint.addActionListener(handler);
+		optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.X_AXIS));
+		optionsPanel.add(Box.createHorizontalGlue());
+		optionsPanel.add(addPoint);
+		optionsPanel.add(Box.createHorizontalGlue());
+		
+		centerPanel.add(mainPanel, "Line of Best Fit");
 	}
-	public void actionPerformed(ActionEvent arg0) 
+	public void show()
 	{
-		buildGUI();
+		mainLayout.show(centerPanel, "Line of Best Fit");
 	}
 	public static JButton[] getButtons() 
 	{
@@ -187,189 +145,92 @@ public class LineOfBestFit extends BaseGUI implements ActionListener
 		tempButtons[1] = buttons[2];
 		return tempButtons;
 	}
-	private static class AddPoint implements ActionListener
+	private class ButtonHandler implements ActionListener
 	{
-		public void actionPerformed(ActionEvent arg0) 
+		public void actionPerformed(ActionEvent event) 
 		{
-			resetButtons();
-			resetTextFields();
-			resetSurroundingLabels();
-		}	
-		private static void resetTextFields() 
-		{
-			/* Create another set of 2 text fields where the user can enter values */
-			JTextField[] textBoxes = new JTextField[TEXT_ARRAY_SIZE];
-			
-			/* Fill the array with text field objects, add them to the panel, and set 
-			 * their bounds */
-			for (int count = 0; count < textBoxes.length; count++) 
+			JButton source = (JButton) event.getSource();
+			if (source.equals(addPoint)) 
 			{
-				/* Initialize the new text field */
-				JTextField textBox = new JTextField();
-				
-				/* Set the text of the text field to an empty String */
-				textBox.setText("");
-				
-				/* Put the new text field into the text field array */
-				textBoxes[count] = textBox;
-				
-				/* Add the text field to the panel */
-				panel.add(textBox);
-				
-				/* Set the size of the text field to the standard text field size */
-				textBox.setSize(TEXT_FIELD_WIDTH,TEXT_FIELD_HEIGHT);
-			}
-			textBoxes[0].setLocation(COLUMN_COORDS[1] - TEXT_FIELD_WIDTH/2, 120 + textFields.size() * (TEXT_FIELD_HEIGHT + 2));
-			textBoxes[1].setLocation(COLUMN_COORDS[3] - TEXT_FIELD_WIDTH/2, 120 + textFields.size() * (TEXT_FIELD_HEIGHT + 2));
-			textFields.add(textBoxes);
-		}
-		private static void resetButtons() 
-		{
-			JButton[] buttons = getButtons();
-			
-			/* If there are currently only 2 sets of text fields, it will 
-			 * add the 'Remove Point' button to the screen and move the 'Add Point 
-			 * button to it's new location */
-			if (textFields.size() == 2) 
-			{
-				panel.add(buttons[1]);
-				buttons[0].setLocation(buttons[0].getX() - 60, buttons[0].getY());
-				buttons[1].setLocation(COLUMN_COORDS[2] - (buttons[1].getWidth()/2) + 60, 172);
-			}
-			
-			/* If the set of data values reaches the max size of the page, the 'Add Point'
-			 * button will be removed */
-			if (textFields.size() == 16) 
-			{
-				panel.remove(buttons[0]);
-				buttons[1].setLocation(COLUMN_COORDS[2] - (buttons[1].getWidth()/2), buttons[1].getY());
-			}
-			
-			/* Move both buttons down */
-			buttons[0].setLocation(buttons[0].getX(), buttons[0].getY() + TEXT_FIELD_HEIGHT + 2);
-			buttons[1].setLocation(buttons[1].getX(), buttons[1].getY() + TEXT_FIELD_HEIGHT + 2);
-			
-			/* Update the panel */
-			panel.repaint();
-		}
-		private static void resetSurroundingLabels() 
-		{
-			/* Create another set of 3 labels that will surround the new text fields */
-			JLabel[] surrLabels = new JLabel[3];
-			
-			/* Fill the array with label objects and them to the panel */
-			for (int count = 0; count < surrLabels.length; count++) 
-			{
-				JLabel surrLabel = new JLabel();
-				surrLabels[count] = surrLabel;
-				panel.add(surrLabel);
-			}
-			
-			/* Set the text contained in each label object */
-			surrLabels[0].setText("(");
-			surrLabels[1].setText(",");
-			surrLabels[2].setText(")");
-			
-			/* Set the size of each label to fit the text contained in it */
-			setComponentsSize(surrLabels);
-			
-			/* Set the coordinates of the new labels to surround the new text fields */
-			surrLabels[0].setLocation(COLUMN_COORDS[0] - (surrLabels[0].getWidth()/2), 120 + labels.size() * (TEXT_FIELD_HEIGHT + 2));
-			surrLabels[1].setLocation(COLUMN_COORDS[2] - (surrLabels[1].getWidth()/2), 120 + labels.size() * (TEXT_FIELD_HEIGHT + 2));
-			surrLabels[2].setLocation(COLUMN_COORDS[4] - (surrLabels[2].getWidth()/2), 120 + labels.size() * (TEXT_FIELD_HEIGHT + 2));
-			
-			/* Add the new JLabel array to the labels arrayList */
-			labels.add(surrLabels);
-		}
-	}
-	private static class RemovePoint implements ActionListener
-	{
-		public void actionPerformed(ActionEvent arg0) 
-		{
-			resetButtons();
-			resetTextFields();
-			resetSurroundingLabels();
-		}
-		private static void resetTextFields() 
-		{
-			/* Remove both text fields from the panel */
-			panel.remove(textFields.get(textFields.size() - 1)[0]);
-			panel.remove(textFields.get(textFields.size() - 1)[1]);
-			
-			/* Set array in array list to null */
-			textFields.set(textFields.size() - 1, null);
-			
-			/* Remove both text fields from the array list */
-			textFields.remove(textFields.size() - 1);	
-			
-			panel.repaint();
-		}
-		private static void resetButtons() 
-		{
-			JButton[] buttons = getButtons();
-			
-			/* If there are currently only 3 data values, the 'Remove Point' button
-			 * will be removed from the panel and the 'Add Point' buttons will be
-			 * move to the center of the panel */
-			if (textFields.size() == 3) 
-			{
-				panel.remove(buttons[1]);
-				buttons[0].setLocation(COLUMN_COORDS[2] - (buttons[0].getWidth()/2), buttons[0].getY());
-			}
-			
-			if (textFields.size() == 17) 
-			{
-				panel.add(buttons[0]);
-				buttons[0].setLocation(COLUMN_COORDS[2] - (buttons[1].getWidth()/2) - 60, buttons[0].getY());
-				buttons[1].setLocation(COLUMN_COORDS[2] - (buttons[1].getWidth()/2) + 60, buttons[1].getY());
-			}
-			
-			/* Move both buttons up */
-			for (int count = 0; count < buttons.length; count++) 
-				buttons[count].setLocation(buttons[count].getX(), buttons[count].getY() - TEXT_FIELD_HEIGHT - 2);
-			
-			/* Update the panel */
-			panel.repaint();
-		}
-		private static void resetSurroundingLabels() 
-		{
-			/* Remove the surrounding labels from the panel */
-			for (int count = 0; count < 3; count++) 
-				panel.remove(labels.get(labels.size() - 1)[count]);
-			
-			/* Set array in array list to null */
-			labels.set(labels.size() - 1, null);
-			
-			/* Remove the surrounding labels from the array list */
-			labels.remove(labels.size() - 1);	
-			
-			panel.repaint();
-		}
-	}
-	private static class Calculate implements ActionListener
-	{
-		public void actionPerformed(ActionEvent arg0) 
-		{
-			/* Check for errors in the text fields */
-			boolean isValid = true;
-			for (int count = 0; count < textFields.size() && isValid; count++) 
-				if (!calcErr.TextFieldErr.isValidInput(textFields.get(count), errWarning)) 
-					isValid = false;
-			
-			/* Proceed with button function if the data fields are valid */
-			if (isValid) 
-			{	
-				double[] xVals = new double[textFields.size()];
-				double[] yVals = new double[textFields.size()];
-				for (int count = 0; count < xVals.length; count++) 
+				JPanel p = new JPanel();
+				JTextField[] point = new JTextField[TEXT_ARRAY_SIZE];
+				for (int count = 0; count < point.length; count++) 
 				{
-					xVals[count] = Double.parseDouble(textFields.get(count)[0].getText());
-					yVals[count] = Double.parseDouble(textFields.get(count)[1].getText());
+					point[count] = new JTextField();
+					point[count].setPreferredSize(TEXT_FIELD_SIZE);
 				}
-				String equation = calcFn.LnOfBestFitFn.findBestFitLine(xVals,yVals);
-				result.setText("Equation = " + equation);
-				setComponentsSize(result);
+				p.setLayout(new FlowLayout(FlowLayout.CENTER));
+				p.add(new JLabel("("));
+				p.add(point[0]);
+				p.add(new JLabel(","));
+				p.add(point[1]);
+				p.add(new JLabel(")"));
+				textFields.add(point);
+				points.add(p);
+				entryPanel.add(p);
+				
+				if (points.size() == 3) 
+				{
+					optionsPanel.removeAll();
+					optionsPanel.add(Box.createHorizontalGlue());
+					optionsPanel.add(addPoint);
+					optionsPanel.add(Box.createHorizontalGlue());
+					optionsPanel.add(removePoint);
+					optionsPanel.add(Box.createHorizontalGlue());
+					optionsPanel.repaint();
+					optionsPanel.revalidate();
+				}
+				entryPanel.repaint();
+				entryPanel.revalidate();
 			}
-		}
+			else if (source.equals(removePoint))
+			{
+				entryPanel.remove(points.get(points.size() - 1));
+				points.remove(points.size() - 1);
+				
+				if (points.size() == 2) 
+				{
+					optionsPanel.removeAll();
+					optionsPanel.add(Box.createHorizontalGlue());
+					optionsPanel.add(addPoint);
+					optionsPanel.add(Box.createHorizontalGlue());
+					optionsPanel.repaint();
+					optionsPanel.revalidate();
+				}
+				entryPanel.repaint();
+				entryPanel.revalidate();
+			}
+			else if (source.equals(calculate)) 
+			{
+				try 
+				{
+					/* Check for errors in the text fields */
+					for (int count = 0; count < textFields.size(); count++)
+					{
+						Double.parseDouble(textFields.get(count)[0].getText());
+						Double.parseDouble(textFields.get(count)[1].getText());
+					}
+					
+					/* Proceed with button function if the data fields are valid */
+					double[] xVals = new double[textFields.size()];
+					double[] yVals = new double[textFields.size()];
+					for (int count = 0; count < xVals.length; count++) 
+					{
+						xVals[count] = Double.parseDouble(textFields.get(count)[0].getText());
+						yVals[count] = Double.parseDouble(textFields.get(count)[1].getText());
+					}
+					String equation = calcFn.LnOfBestFitFn.findBestFitLine(xVals,yVals);
+					result.setText(equation);
+				}
+				catch (NumberFormatException e) 
+				{
+					System.out.println("ERROR");
+				}
+			}
+			else 
+			{
+				main.show();
+			}
+		}	
 	}
 }
